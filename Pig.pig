@@ -459,21 +459,83 @@
 	(4001051,Arlene,Higgins,62,Police officer,1488.67)
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
+	3.find
+		1) total sales 
+		2) total cash sales with %
+		3) total credit card sales with %
+
+	A.LOAD the transaction records into bag:-
+	---------------------------------------
+
+	txn  =  LOAD  '/home/hduser/txns1.txt'  USING PigStorage(',')  AS  ( txnid, date, custid, amount:double, category, product, city, state, type);
+
+	DESCRIBE txn;
+	txn: {txnid: bytearray,date: bytearray,custid: bytearray,amount: double,category: bytearray,product: bytearray,city: bytearray,
+	state: bytearray,type: bytearray}
+
+	DUMP txn;
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	B.GROUP txansaction records by type of transcation:-
+	---------------------------------------------------
+	txnbytype = GROUP txn BY type;
+
+	DESCRIBE txnbytype;
+	txnbytype: {group: bytearray,txn: {(txnid: bytearray,date: bytearray,custid: bytearray,amount: double,category: bytearray,
+	product: bytearray,city: bytearray,state: bytearray,type: bytearray)}}
+
+	DUMP txnbytype;
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	C.Find total amount spend by each type:-
+	--------------------------------------
+
+	spendbytype = foreach  txnbytype  generate group as type,  ROUND_TO(SUM(txn.amount ),2) as typesales;
+
+	DESCRIBE spendbytype;
+	spendbytype: {type: bytearray,typesales: double}
+
+	DUMP spendbytype;
+	(cash,187685.61)
+	(credit,4923134.93)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+	
+	D.GROUP the credit and cash amount:-
+	--------------------------------------
+
+	groupall = group spendbytype all;
+
+	DESCRIBE groupall;
+	groupall: {group: chararray,spendbytype: {(type: bytearray,typesales: double)}}
+
+	DUMP groupall;
+	(all,{(credit,4923134.93),(cash,187685.61)})
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+	
+	E.Find total sales amount:-
+	-------------------------
+	totalsales = foreach groupall generate ROUND_TO(SUM(spendbytype.typesales),2) as totsales;
+
+	DESCRIBE totalsales;
+	totalsales: {totsales: double}
+
+	DUMP totalsales;
+	(5110820.54)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	F.Total cash sales with % & total credit card sales with %:-
+	----------------------------------------------------------
+
+	final = foreach spendbytype generate $0, $1, ROUND_TO(($1/totalsales.totsales)*100,2);
+
+	DESCRIBE final;                                                                       
+	final: {type: bytearray,typesales: double,double}
 
 
+	DUMP final; 
+	(cash,187685.61,3.67)
+	(credit,4923134.93,96.33)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+-------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
