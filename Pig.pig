@@ -458,7 +458,7 @@
 	(4000815,Julie,Galloway,53,Actor,1557.82)
 	(4001051,Arlene,Higgins,62,Police officer,1488.67)
 
-------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------
 	3.find
 		1) total sales 
 		2) total cash sales with %
@@ -467,14 +467,15 @@
 	A.LOAD the transaction records into bag:-
 	---------------------------------------
 
-	txn  =  LOAD  '/home/hduser/txns1.txt'  USING PigStorage(',')  AS  ( txnid, date, custid, amount:double, category, product, city, state, type);
+	txn  =  LOAD  '/home/hduser/txns1.txt'  USING PigStorage(',')  
+	AS  ( txnid, date, custid, amount:double, category, product, city, state, type);
 
 	DESCRIBE txn;
 	txn: {txnid: bytearray,date: bytearray,custid: bytearray,amount: double,category: bytearray,product: bytearray,city: bytearray,
 	state: bytearray,type: bytearray}
 
 	DUMP txn;
-	-----------------------------------------------------------------------------------------------------------------------------------------------
+	----------------------------------------------------------------------------------------------------------------------------------------------
 
 	B.GROUP txansaction records by type of transcation:-
 	---------------------------------------------------
@@ -485,12 +486,12 @@
 	product: bytearray,city: bytearray,state: bytearray,type: bytearray)}}
 
 	DUMP txnbytype;
-	-----------------------------------------------------------------------------------------------------------------------------------------------
+	----------------------------------------------------------------------------------------------------------------------------------------------
 
 	C.Find total amount spend by each type:-
 	--------------------------------------
 
-	spendbytype = foreach  txnbytype  generate group as type,  ROUND_TO(SUM(txn.amount ),2) as typesales;
+	spendbytype = FOREACH  txnbytype  GENERATE group as type,  ROUND_TO(SUM(txn.amount ),2) as typesales;
 
 	DESCRIBE spendbytype;
 	spendbytype: {type: bytearray,typesales: double}
@@ -498,23 +499,23 @@
 	DUMP spendbytype;
 	(cash,187685.61)
 	(credit,4923134.93)
-	-----------------------------------------------------------------------------------------------------------------------------------------------
+	----------------------------------------------------------------------------------------------------------------------------------------------
 	
 	D.GROUP the credit and cash amount:-
 	--------------------------------------
 
-	groupall = group spendbytype all;
+	groupall = GROUP spendbytype all;
 
 	DESCRIBE groupall;
 	groupall: {group: chararray,spendbytype: {(type: bytearray,typesales: double)}}
 
 	DUMP groupall;
 	(all,{(credit,4923134.93),(cash,187685.61)})
-	-----------------------------------------------------------------------------------------------------------------------------------------------
+	----------------------------------------------------------------------------------------------------------------------------------------------
 	
 	E.Find total sales amount:-
 	-------------------------
-	totalsales = foreach groupall generate ROUND_TO(SUM(spendbytype.typesales),2) as totsales;
+	totalsales = FOREACH groupall GENERATE ROUND_TO(SUM(spendbytype.typesales),2) as totsales;
 
 	DESCRIBE totalsales;
 	totalsales: {totsales: double}
@@ -526,7 +527,7 @@
 	F.Total cash sales with % & total credit card sales with %:-
 	----------------------------------------------------------
 
-	final = foreach spendbytype generate $0, $1, ROUND_TO(($1/totalsales.totsales)*100,2);
+	final = FOREACH spendbytype GENERATE $0, $1, ROUND_TO(($1/totalsales.totsales)*100,2);
 
 	DESCRIBE final;                                                                       
 	final: {type: bytearray,typesales: double,double}
@@ -538,4 +539,168 @@
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 
+	4.Track customers whose age is less than 50 and total purchases done more than USD 500
+
+	A.Load the txansaction records:-
+	------------------------------
+
+	txn  =  LOAD  '/home/hduser/txns1.txt'  USING PigStorage(',') 
+	AS  ( txnid, date, custid, amount:double, category, product, city, state, type);
+
+	DESCRIBE txn;
+	txn: {txnid: bytearray,date: bytearray,custid: bytearray,amount: double,category: bytearray,product: bytearray,city: bytearray,
+	state: bytearray,type: bytearray}
+
+	DUMP txn;
+	(00049996,10-02-2011,4007287,163.81,Games,Poker Chips & Sets,Kansas City,Missouri,credit)
+	(00049997,05-03-2011,4003954,35.85,Racquet Sports,Squash,New Orleans,Louisiana,cash)
+	(00049998,10-23-2011,4007843,180.41,Gymnastics,Vaulting Horses,Berkeley,California,credit)
+	(00049999,12-14-2011,4001406,168.49,Team Sports,Team Handball,Rockford,Illinois,credit)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	B.Group the transaction records by custid:-
+	-----------------------------------------
+
+	txnbycust = GROUP txn BY custid;
+
+	DESCRIBE txnbycust;
+	txnbycust: {group: bytearray,txn: {(txnid: bytearray,date: bytearray,custid: bytearray,amount: double,category: bytearray,
+	product: bytearray,city: bytearray,state: bytearray,type: bytearray)}}
+
+	DUMP txnbycust;
+	(4009999,{(00026984,05-22-2011,4009999,111.47,Water Sports,Bodyboarding,Dayton,Ohio,credit),
+	   (00047083,07-20-2011,4009999,27.08,Racquet Sports,Badminton,San Diego,California,cash),..,}
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	C. Find the total amount spend by each customer:-
+	-----------------------------------------------
+
+	spendbycust = FOREACH  txnbycust  GENERATE group as customer_id,  ROUND_TO(SUM(txn.amount ),2) as totalsales;
+
+	DESCRIBE spendbycust;
+	spendbycust: {customer_id: bytearray,totalsales: double}
+
+	DUMP spendbycust;
+	(4009994,461.04)
+	(4009995,455.13)
+	(4009996,836.12)
+	(4009997,486.19)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+	
+	D. Find those customer whose amount is greater than 500:-
+	--------------------------------------------
+
+	cust500 = FILTER spendbycust BY $1>500;
+
+	DESCRIBE cust500;
+	cust500: {customer_id: bytearray,totalsales: double}
+
+	DUMP cust500;
+	(4009984,522.66)
+	(4009987,516.98)
+	(4009990,754.42)
+	(4009996,836.12)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	E. Load customer records:-
+	------------------------
+	cust = LOAD '/home/hduser/custs' USING PigStorage(',') AS (custid, firstname, lastname, age:long, profession);
+
+	DESCRIBE cust;
+	cust: {custid: bytearray,firstname: bytearray,lastname: bytearray,age: long,profession: bytearray}
+
+	DUMP cust;
+	(4009992,Erin,Blackwell,33,Electrician)
+	(4009993,Becky,Wolfe,67,Musician)
+	(4009994,Clyde,Welch,40,Photographer)
+	(4009995,Rebecca,Dennis,37,Teacher)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	F. Join the customer records with transaction records whose amount is > 500 using custid:-
+	----------------------------------------------------------------------------------------
+
+	joined = JOIN cust500 BY $0,cust BY $0;
+
+	DESCRIBE joined;
+	joined: {cust500::customer_id: bytearray,cust500::totalsales: double,cust::custid: bytearray,cust::firstname: bytearray,
+	cust::lastname: bytearray,cust::age: long,cust::profession: bytearray}
+
+	DUMP joined;
+	(4009987,516.98,4009987,Todd,Fox,29,Politician)
+	(4009990,754.42,4009990,Stacey,Rouse,21,Actor)
+	(4009996,836.12,4009996,Tonya,McIntosh,56,Engineering technician)
+	(4009998,665.7,4009998,Tracey,Bullock,60,Computer hardware engineer)
+	(4009999,682.02,4009999,Ray,Hewitt,64,Carpenter)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	G. Create a new bag removing cust id from previous bag because two time custid in that bag:-
+	------------------------------------------------------------------------------------------
+
+	final_join = FOREACH joined GENERATE $0,$3,$4,$5,$6,$1;
+
+	DESCRIBE final_join;
+	final_join: {cust500::customer_id: bytearray,cust::firstname: bytearray,cust::lastname: bytearray,cust::age: long,
+	cust::profession: bytearray,cust500::totalsales: double}
+
+	DUMP final_join;
+	(4009987,Todd,Fox,29,Politician,516.98)
+	(4009990,Stacey,Rouse,21,Actor,754.42)
+	(4009996,Tonya,McIntosh,56,Engineering technician,836.12)
+	(4009998,Tracey,Bullock,60,Computer hardware engineer,665.7)
+	(4009999,Ray,Hewitt,64,Carpenter,682.02)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	H. Find the customer whose age is less than 50:-
+	----------------------------------------------
+
+	final = FILTER final_join BY $3<50;
+
+	DESCRIBE final;
+	final: {cust500::customer_id: bytearray,cust::firstname: bytearray,cust::lastname: bytearray,cust::age: long,
+	cust::profession: bytearray,cust500::totalsales: double}
+
+	DUMP final;
+	(4009979,Tim,Wade,49,Designer,785.28)
+	(4009980,Erica,Moore,47,Artist,567.12)
+	(4009984,Justin,Melvin,43,Loan officer,522.66)
+	(4009987,Todd,Fox,29,Politician,516.98)
+	(4009990,Stacey,Rouse,21,Actor,754.42)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	I.Group the all fields to find how many customer whose age is less than 50 and amount and amount is more than 500:-
+	------------------------------------------------------------------------------------------------------------------
+
+	groupall = GROUP final all;
+
+	DESCRIBE groupall;
+	groupall: {group: chararray,final: {(cust500::customer_id: bytearray,cust::firstname: bytearray,cust::lastname: bytearray,
+	cust::age: long,cust::profession: bytearray,cust500::totalsales: double)}}
+
+	DUMP groupall;
+	(all,{(4009990,Stacey,Rouse,21,Actor,754.42),(4009987,Todd,Fox,29,Politician,516.98),
+	(4009984,Justin,Melvin,43,Loan officer,522.66),
+	(4009980,Erica,Moore,47,Artist,567.12),
+	(4009979,Tim,Wade,49,Designer,785.28),..,})
+	--------------------------------------------------------------------------------------------------------------------------
+
+	totalcount = FOREACH groupall GENERATE COUNT(final);
+
+	DESCRIBE totalcount;
+	totalcount: {long}
+
+	DUMP totalcount;
+	(2422)
+	----------------------------------------------------------------------------------------------------------------------------------------------	
+	
+	J.Find totalsales of all customer whose age <50 and totalsales >500:-
+	-------------------------------------------------------------------
+
+	totalsalesforcust = FOREACH groupall GENERATE ROUND_TO(SUM(final.totalsales),2);
+
+	DESCRIBE totalsalesforcust;
+	totalsalesforcust: {double}
+
+	DUMP totalsalesforcust;
+	(1766401.83)
+------------------------------------------------------------------------------------------------------------------------------------------------------
 
