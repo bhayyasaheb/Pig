@@ -243,6 +243,223 @@
 	(Social worker,212)
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+	2) Top ten customers from sales data along with their full details.
+
+	
+	A. Load transaction records:-
+	---------------------------
+	txn  =  LOAD  '/home/hduser/txns1.txt'  USING PigStorage(',')  AS
+	( txnid, date, custid, amount:double, category, product, city, state, type);
+
+	DESCRIBE txn;
+
+	DESCRIBE txn;
+
+	output is:-
+	txn: {txnid: bytearray,date: bytearray,custid: bytearray,amount: double,category: bytearray,product: bytearray,city: bytearray,
+	state: bytearray,type: bytearray}
+
+	----------------------------------------------------------------------------
+
+	B. Group transactions by customer:-
+	---------------------------------
+
+	txnbycust = GROUP txn BY custid;
+
+	DESCRIBE txnbycust;
+
+	output is:-
+	txnbycust: {group: bytearray,txn: {(txnid: bytearray,date: bytearray,custid: bytearray,amount: double,category: bytearray,
+	product: bytearray,city: bytearray,state: bytearray,type: bytearray)}}
+
+	DUMP txnbycust;
+
+	output is:-
+	(4009983,{(00012377,05-21-2011,4009983,163.58,Winter Sports,Bobsledding,Charlotte,North Carolina,credit),
+		  (00032007,07-19-2011,4009983,8.67,Water Sports,Swimming,Atlanta,Georgia,credit)...})
+
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	C. Sum total amount spent by each customer:-
+	------------------------------------------
+
+	spendbycust = FOREACH  txnbycust  GENERATE group as customer_id,  ROUND_TO(SUM(txn.amount ),2) as totalsales;
+
+	DESCRIBE spendbycust;
+
+	output is:-
+	spendbycust: {customer_id: bytearray,totalsales: double}
+
+	DUMP spendbycust;
+
+	output is:-
+	(4009994,461.04)
+	(4009995,455.13)
+	(4009996,836.12)
+	(4009997,486.19)
+	.
+	.
+	(4009998,665.7)
+
+	---------------------------------------------------------------------------------------------------------------------------------------------
+
+	D. Order the customer records beginning from highest spender:-
+	------------------------------------------------------------
+
+	custorder = ORDER spendbycust BY $1 DESC;
+
+	DESCRIBE custorder;
+
+	output is:-
+	custorder: {customer_id: bytearray,totalsales: double}
+
+	DUMP custorder;
+
+	output is:-
+	(4007518,9.12)
+	(4006547,8.72)
+	(4000590,8.46)
+	(4002513,6.92)
+	(4005196,6.66)
+
+	---------------------------------------------------------------------------------------------------------------------------------------------
+
+	E. Select only top 10 customers:-
+	-------------------------------
+
+	top10cust = LIMIT custorder 10;
+
+	DESCRIBE top10cust;
+
+	output is:-
+	top10cust: {customer_id: bytearray,totalsales: double}
+
+	DUMP top10cust;
+
+	output is:-
+	(4009485,1973.3)
+	(4006425,1732.09)
+	(4000221,1671.47)
+	(4003228,1640.63)
+	(4006606,1628.94)
+	(4006467,1605.95)
+	(4004927,1576.71)
+	(4008321,1560.79)
+	(4000815,1557.82)
+	(4001051,1488.67)
+
+	-------------------------------------------------------------------------------------------------------------------------------------------
+	
+	F. Load customer records:-
+	---------------------------
+	cust = LOAD '/home/hduser/custs' USING PigStorage(',') AS 
+	(custid, firstname, lastname, age:long, profession);
+	
+	DESCRIBE cust;
+
+	output is:-
+	cust: {custid: bytearray,firstname: bytearray,lastname: bytearray,age: long,profession: bytearray}
+
+	DUMP cust;
+
+	output is:-
+	(4009989,Lori,Richards,39,Chemist)
+	(4009990,Stacey,Rouse,21,Actor)
+	(4009991,Paul,Mullins,47,Reporter)
+	(4009992,Erin,Blackwell,33,Electrician)
+	.
+	.
+	(4009993,Becky,Wolfe,67,Musician)
+
+	------------------------------------------------------------------------------------------------------------------------------------------
+	
+
+	G. Join the transactions with customer details:-
+	----------------------------------------------
+
+	top10join = JOIN top10cust BY $0,cust BY $0;
+
+	or 
+
+	top10join = JOIN top10cust by custid, cust by custid;
+
+	DESCRIBE top10join;
+
+	output is:-
+	top10join: {top10cust::customer_id: bytearray,top10cust::totalsales: double,cust::custid: bytearray,cust::firstname: bytearray,
+	cust::lastname: bytearray,cust::age: long,cust::profession: bytearray}
+	
+	DUMP top10join;
+
+	output is:-
+	(4000221,1671.47,4000221,Glenda,Boswell,28,Civil engineer)
+	(4000815,1557.82,4000815,Julie,Galloway,53,Actor)
+	(4001051,1488.67,4001051,Arlene,Higgins,62,Police officer)
+	(4003228,1640.63,4003228,Elsie,Newton,54,Accountant)
+	(4004927,1576.71,4004927,Joan,Lowry,30,Librarian)
+	(4006425,1732.09,4006425,Joe,Burns,30,Economist)
+	(4006467,1605.95,4006467,Evelyn,Monroe,37,Financial analyst)
+	(4006606,1628.94,4006606,Jackie,Lewis,66,Recreation and fitness worker)
+	(4008321,1560.79,4008321,Paul,Carey,64,Human resources assistant)
+	(4009485,1973.3,4009485,Stuart,House,58,Teacher)
+
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	H. Select the required fields from the join  for final output:-
+	-------------------------------------------------------------
+
+	top10 = FOREACH top10join GENERATE $0, $3, $4, $5, $6, $1;
+
+	or
+
+	top10 = FOREACH top10join GENERATE custid, firstname, lastname, age, profession, totalsales;
+
+
+	DESCRIBE top10;
+
+	output is:-
+	top10: {cust::custid: bytearray,cust::firstname: bytearray,cust::lastname: bytearray,cust::age: long,
+	cust::profession: bytearray,top10cust::totalsales: double}
+
+	DUMP top10;
+
+	output is:-
+	(4000221,Glenda,Boswell,28,Civil engineer,1671.47)
+	(4000815,Julie,Galloway,53,Actor,1557.82)
+	(4001051,Arlene,Higgins,62,Police officer,1488.67)
+	(4003228,Elsie,Newton,54,Accountant,1640.63)
+	(4004927,Joan,Lowry,30,Librarian,1576.71)
+	(4006425,Joe,Burns,30,Economist,1732.09)
+	(4006467,Evelyn,Monroe,37,Financial analyst,1605.95)
+	(4006606,Jackie,Lewis,66,Recreation and fitness worker,1628.94)
+	(4008321,Paul,Carey,64,Human resources assistant,1560.79)
+	(4009485,Stuart,House,58,Teacher,1973.3)
+
+
+	top10order = ORDER top10 BY $5 DESC;
+
+	DESCRIBE top10order;
+
+	output is:-
+	top10order: {cust::custid: bytearray,cust::firstname: bytearray,cust::lastname: bytearray,cust::age: long,
+	cust::profession:bytearray,top10cust::totalsales: double}
+
+	DUMP top10order;
+
+	output is:-
+	(4009485,Stuart,House,58,Teacher,1973.3)
+	(4006425,Joe,Burns,30,Economist,1732.09)
+	(4000221,Glenda,Boswell,28,Civil engineer,1671.47)
+	(4003228,Elsie,Newton,54,Accountant,1640.63)
+	(4006606,Jackie,Lewis,66,Recreation and fitness worker,1628.94)
+	(4006467,Evelyn,Monroe,37,Financial analyst,1605.95)
+	(4004927,Joan,Lowry,30,Librarian,1576.71)
+	(4008321,Paul,Carey,64,Human resources assistant,1560.79)
+	(4000815,Julie,Galloway,53,Actor,1557.82)
+	(4001051,Arlene,Higgins,62,Police officer,1488.67)
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
 
 
 
