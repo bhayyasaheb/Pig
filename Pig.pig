@@ -537,7 +537,7 @@
 	(cash,187685.61,3.67)
 	(credit,4923134.93,96.33)
 
--------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	4.Track customers whose age is less than 50 and total purchases done more than USD 500
 
@@ -585,7 +585,7 @@
 	(4009995,455.13)
 	(4009996,836.12)
 	(4009997,486.19)
-	----------------------------------------------------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------------------------------------------------
 	
 	D. Find those customer whose amount is greater than 500:-
 	--------------------------------------------
@@ -600,7 +600,7 @@
 	(4009987,516.98)
 	(4009990,754.42)
 	(4009996,836.12)
-	----------------------------------------------------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------------------------------------------------
 
 	E. Load customer records:-
 	------------------------
@@ -614,7 +614,7 @@
 	(4009993,Becky,Wolfe,67,Musician)
 	(4009994,Clyde,Welch,40,Photographer)
 	(4009995,Rebecca,Dennis,37,Teacher)
-	----------------------------------------------------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------------------------------------------------
 
 	F. Join the customer records with transaction records whose amount is > 500 using custid:-
 	----------------------------------------------------------------------------------------
@@ -665,7 +665,7 @@
 	(4009984,Justin,Melvin,43,Loan officer,522.66)
 	(4009987,Todd,Fox,29,Politician,516.98)
 	(4009990,Stacey,Rouse,21,Actor,754.42)
-	----------------------------------------------------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------------------------------------------------
 
 	I.Group the all fields to find how many customer whose age is less than 50 and amount and amount is more than 500:-
 	------------------------------------------------------------------------------------------------------------------
@@ -703,4 +703,298 @@
 	DUMP totalsalesforcust;
 	(1766401.83)
 ------------------------------------------------------------------------------------------------------------------------------------------------------
+
+	5. Retail Case Study:-	
+		1. Find the catid whose yearly avgerage growth is greater than 10%.
+		2. Find the catid whose yearly avergae growth is less than -5%.
+		3. Find the top 5 sales and bottom 5 sales in the all three years.
+
+
+	A.Load data for each year in the bag in form of catid,name,sales of each month:-
+	------------------------------------------------------------------------------
+
+	year1  =  LOAD  '/home/hduser/2000.txt'  USING PigStorage(',')  
+	AS (catid, name, jan:double,feb:double,march:double,
+	april:double,may:double,jun:double,jul:double,aug:double,sept:double,oct:double,nov:double,dec:double);
+
+	year2  =  LOAD  '/home/hduser/2001.txt'  USING PigStorage(',')  
+	AS (catid, name, jan:double,feb:double,march:double,
+	april:double,may:double,jun:double,jul:double,aug:double,sept:double,oct:double,nov:double,dec:double);
+
+	year3  =  LOAD  '/home/hduser/2002.txt'  USING PigStorage(',')  
+	AS (catid, name, jan:double,feb:double,march:double,
+	april:double,may:double,jun:double,jul:double,aug:double,sept:double,oct:double,nov:double,dec:double);
+
+
+	DESCRIBE year1;
+	year1: {catid: bytearray,name: bytearray,jan: double,feb: double,march: double,april: double,may: double,jun: double,
+	jul: double,aug: double,sept: double,oct: double,nov: double,dec: double}
+
+	DUMP year1;
+	(4411,Automobile and other motor vehicle 						
+	dealers,62306.0,63801.0,63027.0,60592.0,60492.0,61345.0,59995.0,60075.0,61360.0,61017.0,59479.0,58207.0)
+	(4413,Automotive parts acc. and tire stores,5373.0,5284.0,5406.0,5220.0,5289.0,5293.0,5210.0,5236.0,5490.0,5191.0,5166.0,5317.0)
+	(442,Furniture and home furnishings stores,7484.0,7548.0,7599.0,7729.0,7673.0,7593.0,7748.0,7682.0,7665.0,7737.0,7580.0,7160.0)
+	(443,Electronics and appliance stores,6912.0,6959.0,6926.0,7002.0,6898.0,6751.0,6717.0,6781.0,6894.0,6764.0,6688.0,6679.0)
+	(4441,Building mat. and supplies dealers,16789.0,16429.0,17268.0,16500.0,16510.0,16414.0,16502.0,16305.0,16253.0,16392.0,16018.0,16447.0)
+
+	DESCRIBE year2;
+	year2: {catid: bytearray,name: bytearray,jan: double,feb: double,march: double,april: double,may: double,jun: double,
+	jul: double,aug: double,sept: double,oct: double,nov: double,dec: double}
+
+	DUMP year2;
+	(4451,Grocery stores,34229.0,34602.0,34477.0,34727.0,34781.0,34866.0,34792.0,35043.0,35152.0,35270.0,35414.0,35208.0)
+	(4453,Beer wine and liquor stores,2496.0,2457.0,2444.0,2444.0,2455.0,2474.0,2458.0,2454.0,2451.0,2468.0,2512.0,2510.0)
+	(44611,Pharmacies and drug stores,11391.0,11498.0,11571.0,11569.0,11713.0,11822.0,11883.0,11955.0,11906.0,12261.0,12149.0,12167.0)
+	(447,Gasoline stations,21931.0,21615.0,20652.0,21618.0,22628.0,21928.0,20686.0,20878.0,21336.0,20033.0,19245.0,18950.0)
+	(4481,Clothing stores,10014.0,10084.0,9760.0,10103.0,9928.0,9864.0,9925.0,10090.0,9488.0,10020.0,9915.0,10132.0)
+
+	DESCRIBE year3;
+	year3: {catid: bytearray,name: bytearray,jan: double,feb: double,march: double,april: double,may: double,jun: double,
+	jul: double,aug: double,sept: double,oct: double,nov: double,dec: double}
+
+	DUMP year3;
+	(45299,All other gen. merchandise stores,2917.0,2853.0,2829.0,2850.0,2830.0,2885.0,2832.0,2872.0,2885.0,2922.0,2926.0,2936.0)
+	(453,Miscellaneous stores retailers,8447.0,8616.0,8380.0,8579.0,8539.0,8639.0,8575.0,8740.0,8724.0,8579.0,8362.0,8569.0)
+	(4541,Electronic shopping and mail order houses,9902.0,9994.0,9898.0,10025.0,10086.0,10066.0,10224.0,10266.0,10241.0,10305.0,10528.0,10527.0)
+	(45431,Fuel dealers,1751.0,1732.0,1820.0,1960.0,2048.0,1997.0,2057.0,2024.0,2029.0,2136.0,2271.0,2318.0)
+	(722,Food services and drinking places,27201.0,27384.0,27203.0,27500.0,27378.0,27586.0,27616.0,27607.0,27784.0,27623.0,27916.0,28017.0)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+	B. Create a new bag with column is catid,name,year:-
+	--------------------------------------------------
+
+	year2000 = FOREACH year1 GENERATE catid,name,($2+$3+$4+$5+$6+$7+$8+$9+$10+$11+$12+$13) AS totalsales;
+
+	year2001 = FOREACH year2 GENERATE catid,name,($2+$3+$4+$5+$6+$7+$8+$9+$10+$11+$12+$13) AS totalsales;
+
+	year2002 = FOREACH year3 GENERATE catid,name,($2+$3+$4+$5+$6+$7+$8+$9+$10+$11+$12+$13) AS totalsales;
+	
+	DESCRIBE year2000;
+	year2000: {catid: bytearray,name: bytearray,totalsales: double}
+	
+	DUMP year2000;
+	(4411,Automobile and other motor vehicle dealers,731696.0)
+	(4413,Automotive parts acc. and tire stores,63475.0)
+	(442,Furniture and home furnishings stores,91198.0)
+	(443,Electronics and appliance stores,81971.0)
+
+	DESCRIBE year2001;                                                                                   
+	year2001: {catid: bytearray,name: bytearray,totalsales: double}
+
+	DUMP year2001;
+	(4453,Beer wine and liquor stores,29623.0)
+	(44611,Pharmacies and drug stores,141885.0)
+	(447,Gasoline stations,251500.0)
+	(4481,Clothing stores,119323.0)
+
+	DESCRIBE year2002;
+	year2002: {catid: bytearray,name: bytearray,totalsales: double}
+		
+	DUMP year2002;
+	(45299,All other gen. merchandise stores,34537.0)
+	(453,Miscellaneous stores retailers,102749.0)
+	(4541,Electronic shopping and mail order houses,122062.0)
+	(45431,Fuel dealers,24143.0)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+	
+	C. Join each year by using catid:-
+	--------------------------------
+
+	year = JOIN year2000 BY $0,year2001 BY $0, year2002 BY $0;
+
+	DESCRIBE year;                                            
+	year: {year2000::catid: bytearray,year2000::name: bytearray,year2000::totalsales: double,year2001::catid: bytearray,
+	year2001::name: bytearray,year2001::totalsales: double,year2002::catid: bytearray,year2002::name: bytearray,year2002::totalsales: double}
+
+	DUMP year;
+	(442,Furniture and home furnishings stores,91198.0,
+	 442,Furniture and home furnishings stores,91480.0,
+  	 442,Furniture and home furnishings stores,94468.0)
+	(443,Electronics and appliance stores,81971.0,
+	 443,Electronics and appliance stores,79839.0,
+ 	 443,Electronics and appliance stores,83732.0)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+	
+	
+	D. Removing common catid,name from the joined bag year:-
+	------------------------------------------------------
+
+	finalyear = FOREACH year GENERATE $0,$1,$2,$5,$8;
+
+	DESCRIBE finalyear;
+	finalyear: {year2000::catid: bytearray,year2000::name: bytearray,year2000::totalsales: double,year2001::totalsales: double,
+	year2002::totalsales: double}
+
+	DUMP finalyear;
+	(442,Furniture and home furnishings stores,91198.0,91480.0,94468.0)
+	(443,Electronics and appliance stores,81971.0,79839.0,83732.0)
+	(447,Gasoline stations,249673.0,251500.0,250554.0)
+	---------------------------------------------------------------------------------------------------------------------------------------------
+
+	E. Find the growth of sales:-
+	------------------------
+
+	growth = FOREACH finalyear GENERATE $0,$1,$2,$3,$4,ROUND_TO((($3-$2)/$2)*100,2) AS growth1, ROUND_TO((($4-$3)/$3)*100,2) AS gowth2;
+
+	DESCRIBE growth;
+	growth: {year2000::catid: bytearray,year2000::name: bytearray,year2000::totalsales: double,year2001::totalsales: double,
+	year2002::totalsales: double,growth1: double,gowth2: double}
+	
+	DUMP growth;
+	442,Furniture and home furnishings stores,91198.0,91480.0,94468.0,0.31,3.27)
+	(443,Electronics and appliance stores,81971.0,79839.0,83732.0,-2.6,4.88)
+	(447,Gasoline stations,249673.0,251500.0,250554.0,0.73,-0.38)
+	(451,Sporting goods hobby book and music stores,75863.0,76891.0,76754.0,1.36,-0.18)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+	
+	F. Find average growth:-
+	----------------------
+
+	avggrowth = FOREACH growth GENERATE $0,$1,$2,$3,$4,$5,$6,ROUND_TO((($5+$6)/2),2) AS avggrowth;
+
+	DESCRIBE avggrowth;
+	avggrowth: {year2000::catid: bytearray,year2000::name: bytearray,year2000::totalsales: double,
+	year2001::totalsales: double,year2002::totalsales: double,growth1: double,gowth2: double,avggrowth: double}
+	
+	DUMP avggrowth;
+	(442,Furniture and home furnishings stores,91198.0,91480.0,94468.0,0.31,3.27,1.79)
+	(443,Electronics and appliance stores,81971.0,79839.0,83732.0,-2.6,4.88,1.14)
+	(447,Gasoline stations,249673.0,251500.0,250554.0,0.73,-0.38,0.18)
+	(451,Sporting goods hobby book and music stores,75863.0,76891.0,76754.0,1.36,-0.18,0.59)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	G. Find the catid whose avggrowth >10:-
+	-----------------------------------
+
+	avggrowthabove10 = FILTER avggrowth BY $7>10;
+
+	DESCRIBE avggrowthabove10;
+	avggrowthabove10: {year2000::catid: bytearray,year2000::name: bytearray,year2000::totalsales: double,
+	year2001::totalsales: double,year2002::totalsales: double,growth1: double,gowth2: double,avggrowth: double}
+
+	DUMP avggrowthabove10;
+	(45291,Warehouse clubs and supercenters,138784.0,164278.0,191167.0,18.37,16.37,17.37)
+	---------------------------------------------------------------------------------------------------------------------------------------------
+	
+	H. Find the catid whose avgerage growth <-5:-
+	-------------------------------------------
+
+	avggrowthbelow5 = FILTER avggrowth BY $7<-5;
+
+	DESCRIBE avggrowthbelow5;
+	avggrowthbelow5: {year2000::catid: bytearray,year2000::name: bytearray,year2000::totalsales: double,
+	year2001::totalsales: 	double,year2002::totalsales: double,growth1: double,gowth2: double,avggrowth: double}
+	
+	DUMP avggrowthbelow5;	
+	(44811,Men's clothing stores,9499.0,8680.0,8143.0,-8.62,-6.19,-7.4)
+	(45431,Fuel dealers,26871.0,25870.0,24143.0,-3.73,-6.68,-5.2)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	I. Find the total sales in all three years:-
+	------------------------------------------
+
+	totalsales = FOREACH finalyear GENERATE catid,name,($2+$3+$4) as sales;
+
+	DESCRIBE totalsales;
+	totalsales: {year2000::catid: bytearray,year2000::name: bytearray,sales: double}
+	
+	DUMP totalsales;
+	(442,Furniture and home furnishings stores,277146.0)
+	(443,Electronics and appliance stores,245542.0)
+	(447,Gasoline stations,751727.0)
+	(451,Sporting goods hobby book and music stores,229508.0)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	J. Find the top 5 sales catid:-
+	-----------------------------
+
+	toptotalsales = ORDER totalsales BY $2 DESC;
+
+	DESCRIBE toptotalsales;
+	toptotalsales: {year2000::catid: bytearray,year2000::name: bytearray,sales: double}
+
+	DUMP toptotalsales;
+	(4411,Automobile and other motor vehicle dealers,2242463.0)
+	(4451,Grocery stores,1240440.0)
+	(722,Food services and drinking places,951357.0)
+	(447,Gasoline stations,751727.0)
+	-----------------------------------------------------------------------------------------
+
+	topfivetotalsales = LIMIT toptotalsales 5;
+	
+	DESCRIBE topfivetotalsales;
+	topfivetotalsales: {year2000::catid: bytearray,year2000::name: bytearray,sales: double}
+	
+	DUMP topfivetotalsales;
+	(4411,Automobile and other motor vehicle dealers,2242463.0)
+	(4451,Grocery stores,1240440.0)
+	(722,Food services and drinking places,951357.0)
+	(447,Gasoline stations,751727.0)
+	(4521,Department stores (excl. L.D.),682278.0)
+	---------------------------------------------------------------------------------------------------------------------------------------------
+
+			OR
+
+	we also use limit and order by in one row command:-
+
+	topfivetotalsales2 = LIMIT (ORDER totalsales BY $2 DESC) 5;
+	
+	DESCRIBE topfivetotalsales2;
+	topfivetotalsales2: {year2000::catid: bytearray,year2000::name: bytearray,sales: double}
+
+	DUMP topfivetotalsales2;
+	(4411,Automobile and other motor vehicle dealers,2242463.0)
+	(4451,Grocery stores,1240440.0)
+	(722,Food services and drinking places,951357.0)
+	(447,Gasoline stations,751727.0)
+	(4521,Department stores (excl. L.D.),682278.0)
+	--------------------------------------------------------------------------------------------------------------------------------------------
+
+
+	K. Find the bottom 5 sales catid:-
+	-----------------------------
+
+	bottomtotalsales = ORDER totalsales BY $2;
+
+	DESCRIBE bottomtotalsales;    
+	bottomtotalsales: {year2000::catid: bytearray,year2000::name: bytearray,sales: double}
+	
+	DUMP bottomtotalsales;
+	(44811,Men's clothing stores,26322.0)
+	(4482,Shoe stores,68943.0)
+	(44831,Jewelery stores,73148.0)
+	(45431,Fuel dealers,76884.0)
+	--------------------------------------------------------------------------------------------
+	
+	bottomfivetotalsales = LIMIT bottomtotalsales 5;
+	
+	DESCRIBE bottomfivetotalsales;                  
+	bottomfivetotalsales: {year2000::catid: bytearray,year2000::name: bytearray,sales: double}
+
+	DUMP bottomfivetotalsales;
+	(44811,Men's clothing stores,26322.0)
+	(4482,Shoe stores,68943.0)
+	(44831,Jewelery stores,73148.0)
+	(45431,Fuel dealers,76884.0)
+	(4453,Beer wine and liquor stores,87976.0)
+	---------------------------------------------------------------------------------------------------------------------------------------------
+			OR
+
+	we also use limit and order by in one row command:-
+
+	bottomfivetotalsales2= LIMIT (ORDER totalsales BY $2) 5;
+
+	DESCRIBE bottomfivetotalsales2;
+	bottomfivetotalsales2: {year2000::catid: bytearray,year2000::name: bytearray,sales: double}
+
+	DUMP bottomfivetotalsales2;
+	(44811,Men's clothing stores,26322.0)
+	(4482,Shoe stores,68943.0)
+	(44831,Jewelery stores,73148.0)
+	(45431,Fuel dealers,76884.0)
+	(4453,Beer wine and liquor stores,87976.0)
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------
 
