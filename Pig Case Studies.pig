@@ -402,3 +402,113 @@ Q.3 Find the average number of medical claims amount per user.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 
+Q. 4 Find out user who use "Reliable" payment gateways. 
+     Hint:-here Reilable payment gateway is avgerage success rate is above 90.
+
+	A. Load the weblog data in the users bag:-
+	----------------------------------------
+	users = LOAD '/home/hduser/weblog' USING PigStorage() AS (user:chararray,gateway:chararray,time:chararray);
+
+	DESCRIBE users;
+	users: {user: chararray,gateway: chararray,time: chararray}
+
+	DUMP users;
+	(john,citibank,19.00)
+	(john,hsbc bank,19.05)
+	(john,sc bank,17.00)
+	(john,abc bank,17.05)
+	(rita,sc bank,11.05)
+	(rita,abc bank,11.00)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	B. Load the gateway data in gateways bag:-
+	----------------------------------------
+	gateways = LOAD '/home/hduser/gateway' USING PigStorage() AS (gateway:chararray,success_rate:float);
+
+	DESCRIBE gateways;
+	gateways: {gateway: chararray,success_rate: float}
+
+
+	DUMP gateways;
+	(citibank,95.0)
+	(hsbc bank,95.0)
+	(sc bank,92.0)
+	(abc bank,85.0)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	C. Join the users and gateways bag on gateway:-
+	---------------------------------------------
+	users_gateways = JOIN users BY gateway, gateways BY gateway;
+
+	DESCRIBE users_gateways;
+	users_gateways: {users::user: chararray,users::gateway: chararray,users::time: chararray,gateways::gateway: chararray,
+	gateways::success_rate: float}
+
+	DUMP users_gateways;
+	(rita,sc bank,11.05,sc bank,92.0)
+	(john,sc bank,17.00,sc bank,92.0)
+	(rita,abc bank,11.00,abc bank,85.0)
+	(john,abc bank,17.05,abc bank,85.0)
+	(john,citibank,19.00,citibank,95.0)
+	(john,hsbc bank,19.05,hsbc bank,95.0)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	D. Removing Unwanted column from the bag:-
+	----------------------------------------
+	final_user_gateways = FOREACH users_gateways GENERATE $0,$1,$4;
+
+
+	DESCRIBE final_user_gateways;
+	final_user_gateways: {users::user: chararray,users::gateway: chararray,gateways::success_rate: float}
+
+	DUMP final_user_gateways;
+	(rita,sc bank,92.0)
+	(john,sc bank,92.0)
+	(rita,abc bank,85.0)
+	(john,abc bank,85.0)
+	(john,citibank,95.0)
+	(john,hsbc bank,95.0)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	E. Group the bag on user:-
+	------------------------
+	group_users_gateways= GROUP final_user_gateways by user;
+
+
+	DESCRIBE group_users_gateways;
+	group_users_gateways: {group: chararray,final_user_gateways: {(users::user: chararray,users::gateway: chararray,
+	gateways::success_rate: float)}}
+
+
+	DUMP group_users_gateways;
+	(john,{(john,hsbc bank,95.0),(john,citibank,95.0),(john,abc bank,85.0),(john,sc bank,92.0)})
+	(rita,{(rita,abc bank,85.0),(rita,sc bank,92.0)})
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	F. Find the average of success rate for each user:-
+	-------------------------------------------------
+	user_avg = FOREACH group_users_gateways GENERATE group, AVG(final_user_gateways.success_rate) as avgsuccrate;
+
+	DESCRIBE user_avg;
+	user_avg: {group: chararray,avgpr: double}
+
+	DUMP user_avg;
+	(john,91.75)
+	(rita,88.5)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	G. Find the user whose average success rate > 90:-
+	------------------------------------------------
+	result = FILTER user_avg BY avgsuccrate > 90;
+
+	DESCRIBE result;
+	result: {group: chararray,avgpr: double}
+
+	DUMP result;
+	(john,91.75)
+
+	H. Store the output in the local file system:-
+	--------------------------------------------
+	STORE result INTO '/home/hduser/niit/reliable_gateway' USING PigStorage();
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
