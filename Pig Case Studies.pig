@@ -93,3 +93,257 @@ Q.1 Find lsit of authors whose name starts with 'J' and the price of their books
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 
+Q.2 Count the frequency of each distinct word in a text file.
+
+	A.Load data file in the bag:-
+	--------------------------- 
+	file_ip = LOAD '/home/hduser/word_count.txt' USING TextLoader() AS (word:chararray);
+
+	DESCRIBE file_ip;
+	file_ip: {word: chararray}
+
+	DUMP file_ip;
+	(Hadoop is the Elephant King!)
+	(A yellow and elegant thing.)
+	(He never forgets)
+	(Useful data, or lets)
+	(An extraneous element cling!)
+	(A wonderful king is Hadoop.)
+	(The elephant plays well with Sqoop.)
+	(But what helps him to thrive)
+	(Are Impala, and Hive,)
+	(And HDFS in the group.)
+	(Hadoop is an elegant fellow.)
+	(An elephant gentle and mellow.)
+	(He never gets mad,)
+	(Or does anything bad,)
+	(Because, at his core, he is yellow.)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	B. Using FLATTEN and TOKENIZE spliting each word in each row:-
+	-------------------------------------------------------------
+	words = FOREACH file_ip GENERATE FLATTEN(TOKENIZE(word));
+
+	DESCRIBE word;
+	words: {bag_of_tokenTuples_from_word::token: chararray}
+
+	DUMP word;
+	(Hadoop)
+	(is)
+	(the)
+	(Elephant)
+	(King!)
+	(A)
+	(yellow)
+	(and)
+	(elegant)
+	(thing.)
+	(He)
+	(never)
+	(forgets)
+	(Useful)
+	(data)
+	(or)
+	(lets)
+	(An)
+	(extraneous)
+	(element)
+	(cling!)
+	(A)
+	(wonderful)
+	(king)
+	(is)
+	(Hadoop.)
+	(The)
+	(elephant)
+	(plays)
+	(well)
+	(with)
+	(Sqoop.)
+	(But)
+	(what)
+	(helps)
+	(him)
+	(to)
+	(thrive)
+	(Are)
+	(Impala)
+	(and)
+	(Hive)
+	(And)
+	(HDFS)
+	(in)
+	(the)
+	(group.)
+	(Hadoop)
+	(is)
+	(an)
+	(elegant)
+	(fellow.)
+	(An)
+	(elephant)
+	(gentle)
+	(and)
+	(mellow.)
+	(He)
+	(never)
+	(gets)
+	(mad)
+	(Or)
+	(does)
+	(anything)
+	(bad)
+	(Because)
+	(at)
+	(his)
+	(core)
+	(he)
+	(is)
+	(yellow.)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	C. Group data on word:-
+	----------------------
+	grouped = GROUP words BY $0;
+
+	DESCRIBE grouped;
+	grouped: {group: chararray,words: {(bag_of_tokenTuples_from_word::token: chararray)}}
+
+
+	DUMP grouped;
+	(A,{(A),(A)})
+	(An,{(An),(An)})
+	(He,{(He),(He)})
+	(Or,{(Or)})
+	(an,{(an)})
+	(at,{(at)})
+	(he,{(he)})
+	(in,{(in)})
+	(is,{(is),(is),(is),(is)})
+	(or,{(or)})
+	(to,{(to)})
+	(And,{(And)})
+	(Are,{(Are)})
+	(But,{(But)})
+	(The,{(The)})
+	(and,{(and),(and),(and)})
+	(bad,{(bad)})
+	(him,{(him)})
+	(his,{(his)})
+	(mad,{(mad)})
+	(the,{(the),(the)})
+	(HDFS,{(HDFS)})
+	(Hive,{(Hive)})
+	(core,{(core)})
+	(data,{(data)})
+	(does,{(does)})
+	(gets,{(gets)})
+	(king,{(king)})
+	(lets,{(lets)})
+	(well,{(well)})
+	(what,{(what)})
+	(with,{(with)})
+	(King!,{(King!)})
+	(helps,{(helps)})
+	(never,{(never),(never)})
+	(plays,{(plays)})
+	(Hadoop,{(Hadoop),(Hadoop)})
+	(Impala,{(Impala)})
+	(Sqoop.,{(Sqoop.)})
+	(Useful,{(Useful)})
+	(cling!,{(cling!)})
+	(gentle,{(gentle)})
+	(group.,{(group.)})
+	(thing.,{(thing.)})
+	(thrive,{(thrive)})
+	(yellow,{(yellow)})
+	(Because,{(Because)})
+	(Hadoop.,{(Hadoop.)})
+	(elegant,{(elegant),(elegant)})
+	(element,{(element)})
+	(fellow.,{(fellow.)})
+	(forgets,{(forgets)})
+	(mellow.,{(mellow.)})
+	(yellow.,{(yellow.)})
+	(Elephant,{(Elephant)})
+	(anything,{(anything)})
+	(elephant,{(elephant),(elephant)})
+	(wonderful,{(wonderful)})
+	(extraneous,{(extraneous)})
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	D. Count the word:-
+	-----------------
+	word_counts = FOREACH grouped GENERATE group, COUNT(words);
+
+	DESCRIBE word_counts;
+	word_counts: {group: chararray,long}
+
+	DUMP word_counts;
+	(A,2)
+	(An,2)
+	(He,2)
+	(Or,1)
+	(an,1)
+	(at,1)
+	(he,1)
+	(in,1)
+	(is,4)
+	(or,1)
+	(to,1)
+	(And,1)
+	(Are,1)
+	(But,1)
+	(The,1)
+	(and,3)
+	(bad,1)
+	(him,1)
+	(his,1)
+	(mad,1)
+	(the,2)
+	(HDFS,1)
+	(Hive,1)
+	(core,1)
+	(data,1)
+	(does,1)
+	(gets,1)
+	(king,1)
+	(lets,1)
+	(well,1)
+	(what,1)
+	(with,1)
+	(King!,1)
+	(helps,1)
+	(never,2)
+	(plays,1)
+	(Hadoop,2)
+	(Impala,1)
+	(Sqoop.,1)
+	(Useful,1)
+	(cling!,1)
+	(gentle,1)
+	(group.,1)
+	(thing.,1)
+	(thrive,1)
+	(yellow,1)
+	(Because,1)
+	(Hadoop.,1)
+	(elegant,2)
+	(element,1)
+	(fellow.,1)
+	(forgets,1)
+	(mellow.,1)
+	(yellow.,1)
+	(Elephant,1)
+	(anything,1)
+	(elephant,2)
+	(wonderful,1)
+	(extraneous,1)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	E. Store ouput in local file system:-
+	-----------------------------------
+	STORE word_counts INTO '/home/hduser/niit/word_counts' USING PigStorage();
+
+------------------------------------------------------------------------------------------------------------------------------------------------------
+
