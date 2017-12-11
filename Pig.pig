@@ -173,8 +173,14 @@
 	(Automotive mechanic,193)
 	(Carpenter,180)
 	(Chemist,206)
+	
+	J. Store output in local file system:-
+	-------------------------------------
 
-	---------------------------------------------------------------
+	STORE bagname INTO 'local path for saving bag' USING Function name for seperation of values;	
+	
+	STORE orderbyprofession INTO '/home/hduser/niit/orderbyprofession' USING PigStorage();
+	-----------------------------------------------------------------------------------------------
 
 	orderbycount = ORDER countbyprofession BY $1 desc;
 
@@ -198,20 +204,14 @@
 	(Librarian,218)
 	(Firefighter,217)
 	(Computer software engineer,216)
+	
+	K. Store output in local file system:-
+	-------------------------------------
 
-	-----------------------------------------------------------------------------------------
+	STORE orderbycount INTO '/home/hduser/niit/orderbyprofessioncount' USING PigStorage();	
+	-------------------------------------------------------------------------------------------
 
-	J. Save file in Local file system:-
-	---------------------------------
-
-	STORE bagname INTO 'local path for saving bag';
-
-
-	STORE orderbyprofession  INTO  '/home/hduser/niit2/cust_count';
-
-	----------------------------------------------------------------------------------------
-
-	K. To see step by step execution of a sequence of statement:-
+	L. To see step by step execution of a sequence of statement:-
 	----------------------------------------------------
 
 	ILLUSTRATE bagname;
@@ -221,7 +221,7 @@
 
 	------------------------------------------------------------------------------------------
 
-	L. To get top 10 profession:-
+	M. To get top 10 profession:-
 	---------------------------
 
 	new bagname = LIMIT old bagname 10;
@@ -241,6 +241,12 @@
 	(Pharmacist,213)
 	(Human resources assistant,212)
 	(Social worker,212)
+	----------------------------------------------------------------------------------------------
+
+	N. Store output in local file system:-
+	-------------------------------------
+
+	STORE topprof INTO '/home/hduser/niit/top10profession' USING PigStorage();
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	2) Top ten customers from sales data along with their full details.
@@ -458,6 +464,9 @@
 	(4000815,Julie,Galloway,53,Actor,1557.82)
 	(4001051,Arlene,Higgins,62,Police officer,1488.67)
 
+	I. Store the output in local file system:-
+	
+	STORE top10order INTO '/home/hduser/niit/top10customerorder' USING PigStorage();
 -----------------------------------------------------------------------------------------------------------------------------------------------------
 	3.find
 		1) total sales 
@@ -523,8 +532,14 @@
 	DUMP totalsales;
 	(5110820.54)
 	----------------------------------------------------------------------------------------------------------------------------------------------
+	
+	F. Store the output in the local file system:-
+	---------------------------------------------
 
-	F.Total cash sales with % & total credit card sales with %:-
+	STORE totalsales INTO '/home/hduser/niit/totalsales' USING PigStorage();
+	----------------------------------------------------------------------------------------------------------------------------------------------
+
+	G.Total cash sales with % & total credit card sales with %:-
 	----------------------------------------------------------
 
 	final = FOREACH spendbytype GENERATE $0, $1, ROUND_TO(($1/totalsales.totsales)*100,2);
@@ -536,7 +551,12 @@
 	DUMP final; 
 	(cash,187685.61,3.67)
 	(credit,4923134.93,96.33)
+	----------------------------------------------------------------------------------------------------------------------------------------------
+	
+	H. Store the output in the local file system:-
+	---------------------------------------------
 
+	STORE final INTO '/home/hduser/niit/totalcashcreditpercent' USING PigStorage();	
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 	4.Track customers whose age is less than 50 and total purchases done more than USD 500
@@ -665,6 +685,12 @@
 	(4009984,Justin,Melvin,43,Loan officer,522.66)
 	(4009987,Todd,Fox,29,Politician,516.98)
 	(4009990,Stacey,Rouse,21,Actor,754.42)
+	---------------------------------------------------------------------------------------------------------------------------------------------
+
+	I.Store output in the local file system:-
+	---------------------------------------
+	
+	STORE final INTO '/home/hduser/niit/custage50amt500' USING PigStorage();
 	---------------------------------------------------------------------------------------------------------------------------------------------
 
 	I.Group the all fields to find how many customer whose age is less than 50 and amount and amount is more than 500:-
@@ -878,7 +904,13 @@
 	(45291,Warehouse clubs and supercenters,138784.0,164278.0,191167.0,18.37,16.37,17.37)
 	---------------------------------------------------------------------------------------------------------------------------------------------
 	
-	H. Find the catid whose avgerage growth <-5:-
+	H. Store the output in the local file system:-
+	--------------------------------------------
+	
+	STORE avggrowthabove10 INTO '/home/hduser/niit/avggrowthabove10' USING PigStorage();
+	---------------------------------------------------------------------------------------------------------------------------------------------
+	
+	I. Find the catid whose avgerage growth <-5:-
 	-------------------------------------------
 
 	avggrowthbelow5 = FILTER avggrowth BY $7<-5;
@@ -890,9 +922,15 @@
 	DUMP avggrowthbelow5;	
 	(44811,Men's clothing stores,9499.0,8680.0,8143.0,-8.62,-6.19,-7.4)
 	(45431,Fuel dealers,26871.0,25870.0,24143.0,-3.73,-6.68,-5.2)
+	---------------------------------------------------------------------------------------------------------------------------------------------
+
+	J. Store the output in the local file system:-
+	--------------------------------------------
+	
+	STORE avggrowthbelow5 INTO '/home/hduser/niit/avggrowthbelow5' USING PigStorage();
 	----------------------------------------------------------------------------------------------------------------------------------------------
 
-	I. Find the total sales in all three years:-
+	K. Find the total sales in all three years:-
 	------------------------------------------
 
 	totalsales = FOREACH finalyear GENERATE catid,name,($2+$3+$4) as sales;
@@ -907,7 +945,7 @@
 	(451,Sporting goods hobby book and music stores,229508.0)
 	----------------------------------------------------------------------------------------------------------------------------------------------
 
-	J. Find the top 5 sales catid:-
+	L. Find the top 5 sales catid:-
 	-----------------------------
 
 	toptotalsales = ORDER totalsales BY $2 DESC;
@@ -951,9 +989,14 @@
 	(447,Gasoline stations,751727.0)
 	(4521,Department stores (excl. L.D.),682278.0)
 	--------------------------------------------------------------------------------------------------------------------------------------------
+	
+	M. Store the output in the local file system:-
+	--------------------------------------------
+	
+	STORE topfivetotalsales INTO '/home/hduser/niit/topfivetotalsales' USING PigStorage();
+	----------------------------------------------------------------------------------------------------------------------------------------------
 
-
-	K. Find the bottom 5 sales catid:-
+	N. Find the bottom 5 sales catid:-
 	-----------------------------
 
 	bottomtotalsales = ORDER totalsales BY $2;
@@ -995,6 +1038,12 @@
 	(44831,Jewelery stores,73148.0)
 	(45431,Fuel dealers,76884.0)
 	(4453,Beer wine and liquor stores,87976.0)
-
+	----------------------------------------------------------------------------------------------------------------------------------------------
+	
+	O. Store the output in the local file system:-
+	--------------------------------------------
+	
+	STORE bottomfivetotalsales INTO '/home/hduser/niit/bottomfivetotalsales' USING PigStorage();
+	
 --------------------------------------------------------------------------------------------------------------------------------------------------------
 
