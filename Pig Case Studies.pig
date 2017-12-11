@@ -347,3 +347,58 @@ Q.2 Count the frequency of each distinct word in a text file.
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+Q.3 Find the average number of medical claims amount per user.
+
+
+	A. Load data in the bag:-
+	-----------------------
+	claims = LOAD '/home/hduser/medical' USING PigStorage() AS (name,dept,amount:double);
+
+	DESCRIBE claims;
+	claims: {name: bytearray,dept: bytearray,amount: double}
+
+	DUMP claims;
+	(amy,hr,8000)
+	(jack,hr,7500)
+	(joe,finance,9000)
+	(daniel,admin,4750)
+	(tim,TS,4750)
+	(tim,TS,3500)
+	(tim,TS,2750)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	B. Group claims bag on name:-
+	---------------------------
+	employee_claims = GROUP claims by name;
+
+	DESCRIBE employee_claims;
+	employee_claims: {group: bytearray,claims: {(name: bytearray,dept: bytearray,amount: double)}}
+
+	DUMP employee_claims;
+	(amy,{(amy,hr,8000.0)})
+	(joe,{(joe,finance,9000.0)})
+	(tim,{(tim,TS,2750.0),(tim,TS,3500.0),(tim,TS,4750.0)})
+	(jack,{(jack,hr,7500.0)})
+	(daniel,{(daniel,admin,4750.0)})
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	C. Find the average amount of claims:-
+	------------------------------------
+	emp_avg = FOREACH employee_claims GENERATE group,AVG(claims.amount);
+
+	DESCRIBE emp_avg;
+	emp_avg: {group: bytearray,double}
+
+	DUMP emp_avg;
+	(amy,8000.0)
+	(joe,9000.0)
+	(tim,3666.6666666666665)
+	(jack,7500.0)
+	(daniel,4750.0)
+
+	D. Store output in local file system:-
+	-------------------------------------
+	STORE emp_avg INTO '/home/hduser/niit/emp_avg' USING PigStorage();
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
