@@ -506,3 +506,63 @@ RANK:-
 	STORE final INTO '/home/hduser/niit/rank' USING PigStorage();
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 
+COGROUP:-
+-------
+	A.Load purchase data in purchase bag:-
+	------------------------------------
+	purchase = LOAD '/home/hduser/purchase1.txt' USING PigStorage(',') AS (prod:int,pqty:int);
+
+	DESCRIBE purchase;
+	purchase: {prod: int,pqty: int}
+
+	DUMP purchase;
+	(101,20)
+	(102,25)
+	(101,30)
+	(102,40)
+	---------------------------------------------------------------------------------------------
+
+	B.Load sales data in sales bag:-
+	------------------------------
+	sales = LOAD '/home/hduser/sales1.txt' USING PigStorage(',') AS (prod:int,sqty:int);
+
+	DESCRIBE sales;
+	sales: {prod: int,sqty: int}
+
+	DUMP sales;
+	(101,30)
+	(102,30)
+	(101,40)
+	(102,50)
+	----------------------------------------------------------------------------------------------
+
+	C.Cogroup for grouping and joining bag:-
+	--------------------------------------
+	joined = cogroup purchase by $0, sales by $0;
+
+	DESCRIBE joined;
+	joined: {group: int,purchase: {(prod: int,pqty: int)},sales: {(prod: int,sqty: int)}}
+
+	DUMP joined;
+	(101,{(101,30),(101,20)},{(101,40),(101,30)})
+	(102,{(102,40),(102,25)},{(102,50),(102,30)})
+	-------------------------------------------------------------------------------------------------------
+
+	D.Find total sales,purchase,no of sales and purchase transaction:-
+	----------------------------------------------------------------
+	final = FOREACH joined GENERATE group,SUM(purchase.pqty),COUNT(purchase),SUM(sales.sqty),COUNT(sales);
+
+	DESCRIBE final
+	final: {group: int,long,long,long,long}
+
+	DUMP final;
+	(101,50,2,70,2)
+	(102,65,2,80,2)
+	-------------------------------------------------------------------------------------------------------
+
+	E.Store output in local file system:-
+	-----------------------------------
+
+	STORE final INTO '/home/hduser/niit/cogroup/totalsalespurchase' USING PigStorage();
+------------------------------------------------------------------------------------------------------------------------------------------
+
