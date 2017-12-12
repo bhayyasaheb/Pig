@@ -448,3 +448,61 @@ Union & Split:-
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
+RANK:-
+----
+	A.Load data in the bag:-
+	----------------------
+	bag1 = LOAD '/home/hduser/pigfile1.txt' USING PigStorage(',') AS (id:int, name:chararray);
+
+	DESCRIBE bag1;
+	bag1: {id: int,name: chararray}
+
+	DUMP bag1;
+	(,fname)
+	(1,john)
+	(2,Raj)
+	-----------------------------------------------------------------------------------------------
+
+	B.Use Rank function to the bag:-
+	------------------------------
+	ranked_bag = RANK bag1;
+
+	DESCRIBE ranked_bag;
+	ranked_bag: {rank_bag1: long,id: int,name: chararray}
+
+	DUMP ranked_bag;
+	(1,,fname)
+	(2,1,john)
+	(3,2,Raj)
+	----------------------------------------------------------------------------------------------
+
+	C.Remove the first line from the bag:-
+	------------------------------------
+	skip_first = FILTER ranked_bag by rank_bag1>1;
+
+	DESCRIBE skip_first;
+	skip_first: {rank_bag1: long,id: int,name: chararray}
+
+	DUMP skip_first;
+	(2,1,john)
+	(3,2,Raj)
+	---------------------------------------------------------------------------------------------
+
+	D.Filter records and get only required records:-
+	----------------------------------------------
+	final = FOREACH skip_first GENERATE id,name;
+
+	DESCRIBE final;
+	final: {id: int,name: chararray}
+
+	DUMP final;
+	(1,john)
+	(2,Raj)
+	---------------------------------------------------------------------------------------------
+
+	E.Store bag in the local file system:-
+	------------------------------------
+
+	STORE final INTO '/home/hduser/niit/rank' USING PigStorage();
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
