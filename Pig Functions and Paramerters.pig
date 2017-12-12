@@ -653,3 +653,87 @@ COGROUP:-
 	STORE final INTO '/home/hduser/niit/cogroup/counttxnamtfname' USING PigStorage();
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 
+Setting Parameter variable value in pig script:-
+----------------------------------------------
+
+	file.txt
+	---------
+	we are learning hadoop
+	hadoop has two main components
+	hdfs and mapreduce
+	hdfs is storage
+	mapreduce is a processing framework
+	---------------------------------------------------------------------------------------------------------------------------------------
+
+	A. Passing input & output path in command in local:-
+	-----------------------------------------
+
+	wordcount_param.pig
+	--------------
+	--local mode
+	book = LOAD '$inp' USING PigStorage() AS (lines:chararray);
+	DUMP book;
+	STORE book INTO '$output'
+	-----------------------------------------------------------
+
+	pig -x local -p inp=/home/hduser/file.txt -p output=/home/hduser/niit/word2.txt -f wordcount_param.pig
+
+	-----------------------------------------------------------------------------------------------------------------------------------------
+
+	B. Passing input & output path in command in hdfs:-
+	----------------------------------------
+
+	wordcount_param.pig
+	-------------------
+	--hdfs mode
+	book = LOAD '$hdfs_input' USING PigStorage() AS (lines:chararray);
+	DUMP book;
+	STORE book INTO '$hdfs_op';
+	------------------------------------------------------------------
+
+	pig -p hdfs_input=/pig/file.txt -p hdfs_op=/pig/word2 -f wordcount_param.pig
+
+	-------------------------------------------------------------------------------------------------------------------------------------------
+
+	C. Passing  -param_file to setting the input and output path in local:-
+	---------------------------------------------------------------------
+
+	PigInput
+	--------
+	inp=/home/hduser/file.txt
+	output=/home/hduser/niit/word1.txt
+	-----------------------------------------------------------
+
+	wordcount_param.pig
+	--------------
+	--local mode
+	book = LOAD '$inp' USING PigStorage() AS (lines:chararray);
+	DUMP book;
+	STORE book INTO '$output'
+	------------------------------------------------------------
+
+	pig -x local -param_file PigInput -f wordcount_param.pig
+
+	------------------------------------------------------------------------------------------------------------------------------------------
+
+	D. Passing  -param_file to setting the input and output path in hdfs:-
+	--------------------------------------------------------------------
+
+	PigInput
+	--------
+	hdfs_input = /pig/file.txt
+	hdfs_op = /pig/word
+	-------------------------------------------------------------------
+
+	wordcount_param.pig
+	-------------------
+	--hdfs mode
+	book = LOAD '$hdfs_input' USING PigStorage() AS (lines:chararray);
+	DUMP book;
+	STORE book INTO '$hdfs_op';
+	--------------------------------------------------------------------
+
+	pig -param_file PigInput -f wordcount_param.pig
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
