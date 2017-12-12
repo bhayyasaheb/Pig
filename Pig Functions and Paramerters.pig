@@ -564,5 +564,92 @@ COGROUP:-
 	-----------------------------------
 
 	STORE final INTO '/home/hduser/niit/cogroup/totalsalespurchase' USING PigStorage();
-------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+COGROUP:-
+-------
+	Q. find the total count of transactions, value of those transactions and first name of the customer.
+
+	A.Load transaction data in txn bag:-
+	----------------------------------
+
+	txn = LOAD '/home/hduser/txns1.txt' USING PigStorage(',') AS (txnid, txndate, custno:chararray, amount:double, cat, prod, city, sate, type);
+
+	DESCRIBE txn;
+	txn: {txnid: bytearray,txndate: bytearray,custno: chararray,amount: double,cat: bytearray,prod: bytearray,
+	city: bytearray,sate: bytearray,type: bytearray}
+
+	DUMP txn;
+	(00049997,05-03-2011,4003954,35.85,Racquet Sports,Squash,New Orleans,Louisiana,cash)
+	(00049996,10-02-2011,4007287,163.81,Games,Poker Chips & Sets,Kansas City,Missouri,credit)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	B.Load customer data in cust bag:-
+	--------------------------------
+
+	cust = LOAD '/home/hduser/custs' USING PigStorage(',')  AS (custno:chararray, firstname:chararray, lastname, age:int, profession:chararray);
+
+	DESCRIBE cust;
+	cust: {custno: chararray,firstname: chararray,lastname: bytearray,age: int,profession: chararray}
+
+	DUMP cust;
+	(4009997,Ron,Grimes,36,Computer hardware engineer)
+	(4009998,Tracey,Bullock,60,Computer hardware engineer)
+	(4009999,Ray,Hewitt,64,Carpenter)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	C.Removing unwanted data:-
+	------------------------
+
+	txn = FOREACH txn GENERATE custno,amount;
+
+	DESCRIBE txn;
+	txn: {custno: chararray,amount: double}
+
+	DUMP txn;
+	(4003954,35.85)
+	(4007843,180.41)
+	---------------------------------------------------
+
+	cust = FOREACH cust GENERATE custno,firstname;
+
+	DESCRIBE cust;
+	cust: {custno: chararray,firstname: chararray}
+
+	DUMP cust;
+	(4009998,Tracey)
+	(4009999,Ray)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	D.Join the two bag:-
+	------------------
+
+	joined = JOIN cust BY $0, txn BY $0;
+
+	DESCRIBE joined;
+	joined: {txn::custno: chararray,txn::amount: double,cust::custno: chararray,cust::firstname: chararray}
+
+	DUMP joined;
+	(4009999,74.67,4009999,Ray)
+	(4009999,176.0,4009999,Ray)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	E.Find the txn count and amount:-
+	-------------------------------
+	final = FOREACH joined GENERATE cust.firstname,COUNT(txn), ROUND_TO(SUM(txn.amount),2);
+
+	DESCRIBE final;
+	final: {{(firstname: chararray)},long,double}
+
+	DUMP final;
+	({(Ron)},4,486.19)
+	({(Tracey)},6,665.7)
+	({(Ray)},8,682.02)
+	-----------------------------------------------------------------------------------------------------------------------------------------------
+
+	F.Store bag in the local file system:-
+	------------------------------------
+
+	STORE final INTO '/home/hduser/niit/cogroup/counttxnamtfname' USING PigStorage();
+-------------------------------------------------------------------------------------------------------------------------------------------------------
 
